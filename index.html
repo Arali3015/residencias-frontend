@@ -47,7 +47,11 @@ font-size:13px;
 th{
 background:#4e73df;
 color:white;
-padding:6px;
+padding:8px;
+cursor:pointer;
+}
+th:hover{
+background:#2e59d9;
 }
 td{
 padding:6px;
@@ -88,15 +92,15 @@ text-align:right;
 <input id="buscar" placeholder="Buscar..." onkeyup="filtrar()">
 </div>
 
-</table>
+<table>
 <thead>
 <tr>
 <th>ID</th>
-<th onclick="ordenar('matricula')">Matricula ⬍</th>
-<th onclick="ordenar('nombre_completo')">Alumno ⬍</th>
-<th onclick="ordenar('proyecto')">Titulo ⬍</th>
-<th onclick="ordenar('nombre_empresa')">Empresa ⬍</th>
-<th onclick="ordenar('nombre_periodo')">Periodo ⬍</th>
+<th onclick="ordenar('matricula')" style="cursor:pointer;">Matricula ⬍</th>
+<th onclick="ordenar('nombre_completo')" style="cursor:pointer;">Alumno ⬍</th>
+<th onclick="ordenar('proyecto')" style="cursor:pointer;">Titulo ⬍</th>
+<th onclick="ordenar('nombre_empresa')" style="cursor:pointer;">Empresa ⬍</th>
+<th onclick="ordenar('nombre_periodo')" style="cursor:pointer;">Periodo ⬍</th>
 <th>Asesor Interno</th>
 <th>Asesor Externo</th>
 <th>Acciones</th>
