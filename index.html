@@ -88,15 +88,14 @@ text-align:right;
 <input id="buscar" placeholder="Buscar..." onkeyup="filtrar()">
 </div>
 
-<table>
 <thead>
 <tr>
 <th>ID</th>
-<th>Matricula</th>
-<th>Alumno</th>
-<th>Proyecto</th>
-<th>Empresa</th>
-<th>Periodo</th>
+<th onclick="ordenar('matricula')">Matricula ⬍</th>
+<th onclick="ordenar('nombre_completo')">Alumno ⬍</th>
+<th onclick="ordenar('proyecto')">Titulo ⬍</th>
+<th onclick="ordenar('nombre_empresa')">Empresa ⬍</th>
+<th onclick="ordenar('nombre_periodo')">Periodo ⬍</th>
 <th>Acciones</th>
 </tr>
 </thead>
@@ -119,6 +118,34 @@ mostrar(data);
 });
 }
 
+let ordenAscendente = true;
+
+function ordenar(campo){
+
+datosGlobal.sort((a,b)=>{
+
+let valorA;
+let valorB;
+
+if(campo === "nombre_completo"){
+valorA = (a.nombre_alumno + " " + a.apellido_alumno).toLowerCase();
+valorB = (b.nombre_alumno + " " + b.apellido_alumno).toLowerCase();
+}else{
+valorA = (a[campo] || "").toString().toLowerCase();
+valorB = (b[campo] || "").toString().toLowerCase();
+}
+
+if(valorA < valorB) return ordenAscendente ? -1 : 1;
+if(valorA > valorB) return ordenAscendente ? 1 : -1;
+return 0;
+
+});
+
+ordenAscendente = !ordenAscendente;
+
+mostrar(datosGlobal);
+}
+
 function mostrar(data){
 let tabla=document.getElementById("tabla");
 tabla.innerHTML="";
@@ -127,10 +154,10 @@ tabla.innerHTML+=`
 <tr>
 <td>${p.id}</td>
 <td>${p.matricula}</td>
-<td>${p.alumno}</td>
+<td>${p.nombre_alumno} ${p.apellido_alumno}</td>
 <td>${p.proyecto}</td>
-<td>${p.empresa}</td>
-<td>${p.periodo}</td>
+<td>${p.nombre_empresa}</td>
+<td>${p.nombre_periodo}</td>
 <td>
 <button class="btn-warning" onclick="cargarEdicion(${p.id})">Editar</button>
 <button class="btn-danger" onclick="eliminar(${p.id})">Eliminar</button>
@@ -164,13 +191,17 @@ body:JSON.stringify(datos)
 }).then(()=>{
 editandoId=null;
 cargar();
+limpiarFormulario();
 });
 }else{
 fetch(API+"/registrar",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify(datos)
-}).then(()=>cargar());
+}).then(()=>{
+cargar();
+limpiarFormulario();
+});
 }
 }
 
@@ -188,17 +219,17 @@ editandoId=id;
 proyecto.value=p.proyecto;
 matricula.value=p.matricula;
 let nombres=p.alumno.split(" ");
-nombre_alumno.value=nombres[0];
-apellido_alumno.value=nombres[1]||"";
-nombre_empresa.value=p.empresa;
-nombre_periodo.value=p.periodo;
+nombre_alumno.value=p.nombre_alumno;
+apellido_alumno.value=p.apellido_alumno;
+nombre_empresa.value=p.nombre_empresa;
+nombre_periodo.value=p.nombre_periodo;
 }
 
 function filtrar(){
 let texto=buscar.value.toLowerCase();
 let filtrado=datosGlobal.filter(p=>
 p.proyecto.toLowerCase().includes(texto)||
-p.empresa.toLowerCase().includes(texto)||
+p.nombre_empresa.toLowerCase().includes(texto)||
 p.matricula.toLowerCase().includes(texto)
 );
 mostrar(filtrado);
