@@ -95,7 +95,6 @@ text-align:right;
 <table>
 <thead>
 <tr>
-<th>ID</th>
 <th onclick="ordenar('matricula')" style="cursor:pointer;">Matricula ⬍</th>
 <th onclick="ordenar('nombre_completo')" style="cursor:pointer;">Alumno ⬍</th>
 <th onclick="ordenar('proyecto')" style="cursor:pointer;">Titulo ⬍</th>
@@ -165,14 +164,13 @@ tabla.innerHTML="";
 data.forEach(p=>{
 tabla.innerHTML+=`
 <tr>
-<td>${p.id}</td>
-<td>${p.matricula}</td>
-<td>${p.nombre_alumno} ${p.apellido_alumno}</td>
-<td>${p.proyecto}</td>
-<td>${p.nombre_empresa}</td>
-<td>${p.nombre_periodo}</td>
-<td>${p.nombre_ase_int} ${p.apellido_ase_int}</td>
-<td>${p.nombre_ase_ext} ${p.apellido_ase_ext}</td>
+<td>${p.matricula || ""}</td>
+<td>${(p.nombre_alumno || "")} ${(p.apellido_alumno || "")}</td>
+<td>${p.proyecto || ""}</td>
+<td>${p.nombre_empresa || ""}</td>
+<td>${p.nombre_periodo || ""}</td>
+<td>${(p.nombre_ase_int || "")} ${(p.apellido_ase_int || "")}</td>
+<td>${(p.nombre_ase_ext || "")} ${(p.apellido_ase_ext || "")}</td>
 <td>
 <button class="btn-warning" onclick="cargarEdicion(${p.id})">Editar</button>
 <button class="btn-danger" onclick="eliminar(${p.id})">Eliminar</button>
@@ -197,6 +195,22 @@ nombre_periodo:nombre_periodo.value,
 fecha_inicio:fecha_inicio.value,
 fecha_fin:fecha_fin.value
 };
+
+function limpiarFormulario(){
+proyecto.value="";
+matricula.value="";
+nombre_alumno.value="";
+apellido_alumno.value="";
+nombre_ase_int.value="";
+apellido_ase_int.value="";
+nombre_ase_ext.value="";
+apellido_ase_ext.value="";
+nombre_empresa.value="";
+nombre_periodo.value="";
+fecha_inicio.value="";
+fecha_fin.value="";
+editandoId=null;
+}
 
 if(editandoId){
 fetch(API+"/editar/"+editandoId,{
@@ -231,13 +245,16 @@ function cargarEdicion(id){
 let p=datosGlobal.find(x=>x.id==id);
 editandoId=id;
 
-proyecto.value=p.proyecto;
-matricula.value=p.matricula;
-let nombres=p.alumno.split(" ");
-nombre_alumno.value=p.nombre_alumno;
-apellido_alumno.value=p.apellido_alumno;
-nombre_empresa.value=p.nombre_empresa;
-nombre_periodo.value=p.nombre_periodo;
+proyecto.value=p.proyecto || "";
+matricula.value=p.matricula || "";
+nombre_alumno.value=p.nombre_alumno || "";
+apellido_alumno.value=p.apellido_alumno || "";
+nombre_ase_int.value=p.nombre_ase_int || "";
+apellido_ase_int.value=p.apellido_ase_int || "";
+nombre_ase_ext.value=p.nombre_ase_ext || "";
+apellido_ase_ext.value=p.apellido_ase_ext || "";
+nombre_empresa.value=p.nombre_empresa || "";
+nombre_periodo.value=p.nombre_periodo || "";
 }
 
 function filtrar(){
