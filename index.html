@@ -96,6 +96,8 @@ text-align:right;
 <th onclick="ordenar('proyecto')">Titulo ⬍</th>
 <th onclick="ordenar('nombre_empresa')">Empresa ⬍</th>
 <th onclick="ordenar('nombre_periodo')">Periodo ⬍</th>
+<th>Asesor Interno</th>
+<th>Asesor Externo</th>
 <th>Acciones</th>
 </tr>
 </thead>
@@ -118,9 +120,17 @@ mostrar(data);
 });
 }
 
+let campoActual = "";
 let ordenAscendente = true;
 
 function ordenar(campo){
+
+if(campoActual === campo){
+ordenAscendente = !ordenAscendente;
+}else{
+ordenAscendente = true;
+campoActual = campo;
+}
 
 datosGlobal.sort((a,b)=>{
 
@@ -141,8 +151,6 @@ return 0;
 
 });
 
-ordenAscendente = !ordenAscendente;
-
 mostrar(datosGlobal);
 }
 
@@ -158,6 +166,8 @@ tabla.innerHTML+=`
 <td>${p.proyecto}</td>
 <td>${p.nombre_empresa}</td>
 <td>${p.nombre_periodo}</td>
+<td>${p.nombre_ase_int} ${p.apellido_ase_int}</td>
+<td>${p.nombre_ase_ext} ${p.apellido_ase_ext}</td>
 <td>
 <button class="btn-warning" onclick="cargarEdicion(${p.id})">Editar</button>
 <button class="btn-danger" onclick="eliminar(${p.id})">Eliminar</button>
