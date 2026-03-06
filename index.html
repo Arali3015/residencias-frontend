@@ -162,25 +162,21 @@ mostrar(datosGlobal);
 function mostrar(data){
 let tabla=document.getElementById("tabla");
 tabla.innerHTML="";
-
 data.forEach(p=>{
-
 tabla.innerHTML+=`
 <tr>
-<td>${p.matricula || ""}</td>
-<td>${(p.nombre_alumno || "") + " " + (p.apellido_alumno || "")}</td>
-<td>${p.proyecto || ""}</td>
-<td>${p.nombre_empresa || ""}</td>
-<td>${p.nombre_periodo || ""}</td>
-<td>${(p.nombre_ase_int || "") + " " + (p.apellido_ase_int || "")}</td>
-<td>${(p.nombre_ase_ext || "") + " " + (p.apellido_ase_ext || "")}</td>
+<td>${p.id}</td>
+<td>${p.matricula}</td>
+<td>${p.alumno}</td>
+<td>${p.proyecto}</td>
+<td>${p.empresa}</td>
+<td>${p.periodo}</td>
 <td>
 <button class="btn-warning" onclick="cargarEdicion(${p.id})">Editar</button>
 <button class="btn-danger" onclick="eliminar(${p.id})">Eliminar</button>
 </td>
 </tr>
 `;
-
 });
 }
 
