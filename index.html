@@ -244,6 +244,10 @@ function mostrar(data) {
     tabla.innerHTML = "";
     
     data.forEach(p => {
+        console.log("Registro:", p); // <-- ESTO ES IMPORTANTE, mira la consola
+        
+        // El ID puede venir como id_proyecto o como id
+        const idRegistro = p.id_proyecto || p.id;
         const matricula = p.matricula || 'N/A';
         const alumno = p.alumno || 'N/A';
         const proyecto = p.proyecto || 'N/A';
@@ -267,8 +271,8 @@ function mostrar(data) {
             <td>${asesorInterno}</td>
             <td>${asesorExterno}</td>
             <td>
-                <button class="btn-warning" onclick="cargarEdicion(${p.id_proyecto})" style="margin-right:5px;" title="Editar">✏️</button>
-                <button class="btn-danger" onclick="eliminar(${p.id_proyecto})" title="Eliminar">🗑️</button>
+                <button class="btn-warning" onclick="cargarEdicion(${idRegistro})" style="margin-right:5px;" title="Editar">✏️</button>
+                <button class="btn-danger" onclick="eliminar(${idRegistro})" title="Eliminar">🗑️</button>
             </td>
         </tr>
         `;
