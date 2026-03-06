@@ -47,11 +47,7 @@ font-size:13px;
 th{
 background:#4e73df;
 color:white;
-padding:8px;
-cursor:pointer;
-}
-th:hover{
-background:#2e59d9;
+padding:6px;
 }
 td{
 padding:6px;
@@ -87,6 +83,7 @@ text-align:right;
 </div>
 
 <button class="btn-primary" onclick="registrar()">Guardar</button>
+<button class="btn-warning" onclick="limpiarFormulario()" style="margin-left:10px;">Nuevo</button>
 
 <div class="search">
 <input id="buscar" placeholder="Buscar..." onkeyup="filtrar()">
@@ -95,13 +92,12 @@ text-align:right;
 <table>
 <thead>
 <tr>
-<th onclick="ordenar('matricula')" style="cursor:pointer;">Matricula ⬍</th>
-<th onclick="ordenar('nombre_completo')" style="cursor:pointer;">Alumno ⬍</th>
-<th onclick="ordenar('proyecto')" style="cursor:pointer;">Titulo ⬍</th>
-<th onclick="ordenar('nombre_empresa')" style="cursor:pointer;">Empresa ⬍</th>
-<th onclick="ordenar('nombre_periodo')" style="cursor:pointer;">Periodo ⬍</th>
-<th>Asesor Interno</th>
-<th>Asesor Externo</th>
+<th>ID</th>
+<th>Matricula</th>
+<th>Alumno</th>
+<th>Proyecto</th>
+<th>Empresa</th>
+<th>Periodo</th>
 <th>Acciones</th>
 </tr>
 </thead>
@@ -119,58 +115,31 @@ function cargar(){
 fetch(API+"/proyectos")
 .then(r=>r.json())
 .then(data=>{
-console.log(data);
 datosGlobal=data;
 mostrar(data);
-});
-}
-
-let campoActual = "";
-let ordenAscendente = true;
-
-function ordenar(campo){
-
-if(campoActual === campo){
-ordenAscendente = !ordenAscendente;
-}else{
-ordenAscendente = true;
-campoActual = campo;
-}
-
-datosGlobal.sort((a,b)=>{
-
-let valorA;
-let valorB;
-
-if(campo === "nombre_completo"){
-valorA = (a.nombre_alumno + " " + a.apellido_alumno).toLowerCase();
-valorB = (b.nombre_alumno + " " + b.apellido_alumno).toLowerCase();
-}else{
-valorA = (a[campo] || "").toString().toLowerCase();
-valorB = (b[campo] || "").toString().toLowerCase();
-}
-
-if(valorA < valorB) return ordenAscendente ? -1 : 1;
-if(valorA > valorB) return ordenAscendente ? 1 : -1;
-return 0;
-
-});
-
-mostrar(datosGlobal);
+})
+.catch(error=>console.error('Error al cargar:',error));
 }
 
 function mostrar(data){
 let tabla=document.getElementById("tabla");
 tabla.innerHTML="";
 data.forEach(p=>{
+// Verificar que los campos existan y mostrar valores por defecto si no existen
+let alumnoCompleto = p.alumno || (p.nombre_alumno + ' ' + (p.apellido_alumno || '')).trim() || 'N/A';
+let empresa = p.empresa || p.nombre_empresa || 'N/A';
+let periodo = p.periodo || p.nombre_periodo || 'N/A';
+let matricula = p.matricula || 'N/A';
+let proyecto = p.proyecto || 'N/A';
+
 tabla.innerHTML+=`
 <tr>
-<td>${p.id}</td>
-<td>${p.matricula}</td>
-<td>${p.alumno}</td>
-<td>${p.proyecto}</td>
-<td>${p.empresa}</td>
-<td>${p.periodo}</td>
+<td>${p.id || ''}</td>
+<td>${matricula}</td>
+<td>${alumnoCompleto}</td>
+<td>${proyecto}</td>
+<td>${empresa}</td>
+<td>${periodo}</td>
 <td>
 <button class="btn-warning" onclick="cargarEdicion(${p.id})">Editar</button>
 <button class="btn-danger" onclick="eliminar(${p.id})">Eliminar</button>
@@ -181,6 +150,12 @@ tabla.innerHTML+=`
 }
 
 function registrar(){
+// Validar campos requeridos
+if(!proyecto.value || !matricula.value || !nombre_alumno.value || !nombre_empresa.value){
+alert('Por favor complete los campos obligatorios: Proyecto, Matrícula, Nombre del alumno y Empresa');
+return;
+}
+
 let datos={
 proyecto:proyecto.value,
 matricula:matricula.value,
@@ -196,79 +171,113 @@ fecha_inicio:fecha_inicio.value,
 fecha_fin:fecha_fin.value
 };
 
+let url, method;
+
 if(editandoId){
-fetch(API+"/editar/"+editandoId,{
-method:"PUT",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(datos)
-}).then(()=>{
-editandoId=null;
-cargar();
-limpiarFormulario();
-});
+url = API+"/editar/"+editandoId;
+method = "PUT";
 }else{
-fetch(API+"/registrar",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(datos)
-}).then(()=>{
-cargar();
-limpiarFormulario();
-});
-}
+url = API+"/registrar";
+method = "POST";
 }
 
-function limpiarFormulario(){
-proyecto.value="";
-matricula.value="";
-nombre_alumno.value="";
-apellido_alumno.value="";
-nombre_ase_int.value="";
-apellido_ase_int.value="";
-nombre_ase_ext.value="";
-apellido_ase_ext.value="";
-nombre_empresa.value="";
-nombre_periodo.value="";
-fecha_inicio.value="";
-fecha_fin.value="";
-editandoId=null;
+fetch(url,{
+method: method,
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(datos)
+})
+.then(response => {
+if(!response.ok){
+throw new Error('Error en la petición');
+}
+return response.json();
+})
+.then(() => {
+limpiarFormulario();
+cargar();
+})
+.catch(error => {
+console.error('Error:', error);
+alert('Error al guardar los datos');
+});
 }
 
 function eliminar(id){
 if(confirm("¿Eliminar registro?")){
 fetch(API+"/eliminar/"+id,{method:"DELETE"})
-.then(()=>cargar());
+.then(response => {
+if(!response.ok){
+throw new Error('Error al eliminar');
+}
+cargar();
+})
+.catch(error => {
+console.error('Error:', error);
+alert('Error al eliminar el registro');
+});
 }
 }
 
 function cargarEdicion(id){
 let p=datosGlobal.find(x=>x.id==id);
+if(!p) return;
+
 editandoId=id;
 
-proyecto.value=p.proyecto || "";
-matricula.value=p.matricula || "";
-nombre_alumno.value=p.nombre_alumno || "";
-apellido_alumno.value=p.apellido_alumno || "";
-nombre_ase_int.value=p.nombre_ase_int || "";
-apellido_ase_int.value=p.apellido_ase_int || "";
-nombre_ase_ext.value=p.nombre_ase_ext || "";
-apellido_ase_ext.value=p.apellido_ase_ext || "";
-nombre_empresa.value=p.nombre_empresa || "";
-nombre_periodo.value=p.nombre_periodo || "";
-fecha_inicio.value=p.fecha_inicio || "";
-fecha_fin.value=p.fecha_fin || "";
+proyecto.value=p.proyecto || '';
+matricula.value=p.matricula || '';
+
+// Manejar el nombre completo del alumno
+if(p.alumno){
+let nombres=p.alumno.split(" ");
+nombre_alumno.value=nombres[0] || '';
+apellido_alumno.value=nombres.slice(1).join(" ") || '';
+} else {
+nombre_alumno.value=p.nombre_alumno || '';
+apellido_alumno.value=p.apellido_alumno || '';
+}
+
+nombre_empresa.value=p.empresa || p.nombre_empresa || '';
+nombre_periodo.value=p.periodo || p.nombre_periodo || '';
+
+// Cargar otros campos si existen
+nombre_ase_int.value=p.nombre_ase_int || '';
+apellido_ase_int.value=p.apellido_ase_int || '';
+nombre_ase_ext.value=p.nombre_ase_ext || '';
+apellido_ase_ext.value=p.apellido_ase_ext || '';
+fecha_inicio.value=p.fecha_inicio || '';
+fecha_fin.value=p.fecha_fin || '';
+}
+
+function limpiarFormulario(){
+editandoId=null;
+proyecto.value='';
+matricula.value='';
+nombre_alumno.value='';
+apellido_alumno.value='';
+nombre_ase_int.value='';
+apellido_ase_int.value='';
+nombre_ase_ext.value='';
+apellido_ase_ext.value='';
+nombre_empresa.value='';
+nombre_periodo.value='';
+fecha_inicio.value='';
+fecha_fin.value='';
 }
 
 function filtrar(){
 let texto=buscar.value.toLowerCase();
-let filtrado=datosGlobal.filter(p=>
-p.proyecto.toLowerCase().includes(texto)||
-p.nombre_empresa.toLowerCase().includes(texto)||
-p.matricula.toLowerCase().includes(texto)
-);
+let filtrado=datosGlobal.filter(p=>{
+let proyecto = (p.proyecto || '').toLowerCase();
+let empresa = (p.empresa || p.nombre_empresa || '').toLowerCase();
+let matricula = (p.matricula || '').toLowerCase();
+let alumno = (p.alumno || p.nombre_alumno || '').toLowerCase();
+return proyecto.includes(texto) || empresa.includes(texto) || matricula.includes(texto) || alumno.includes(texto);
+});
 mostrar(filtrado);
 }
 
+// Cargar datos al iniciar
 cargar();
 </script>
 
