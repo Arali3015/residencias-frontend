@@ -111,19 +111,18 @@ margin-left:5px;
 </div>
 
 <div>
-<button class="btn-primary" onclick="registrar()">Guardar</button>
+<button class="btn-primary" onclick="registrar()">💾 Guardar</button>
 <button class="btn-success" onclick="limpiarFormulario()" style="margin-left:10px;">🆕 Nuevo</button>
-<button class="btn-warning" onclick="cargar()" style="margin-left:10px;">Actualizar</button>
+<button class="btn-warning" onclick="cargar()" style="margin-left:10px;">🔄 Actualizar</button>
 </div>
 
 <div class="search">
-<input id="buscar" placeholder="Buscar por proyecto, empresa o matrícula..." onkeyup="filtrar()">
+<input id="buscar" placeholder="🔍 Buscar por proyecto, empresa o matrícula..." onkeyup="filtrar()">
 </div>
 
 <table>
 <thead>
 <tr>
-<th onclick="ordenarPor('id')">ID <span class="orden-indicador" id="orden-id">↕️</span></th>
 <th onclick="ordenarPor('matricula')">Matrícula <span class="orden-indicador" id="orden-matricula">↕️</span></th>
 <th onclick="ordenarPor('alumno')">Alumno <span class="orden-indicador" id="orden-alumno">↕️</span></th>
 <th onclick="ordenarPor('proyecto')">Proyecto <span class="orden-indicador" id="orden-proyecto">↕️</span></th>
@@ -135,7 +134,7 @@ margin-left:5px;
 </tr>
 </thead>
 <tbody id="tabla">
-<tr><td colspan="9" style="text-align:center;">Cargando datos...</td></tr>
+<tr><td colspan="8" style="text-align:center;">Cargando datos...</td></tr>
 </tbody>
 </table>
 
@@ -171,7 +170,9 @@ function ordenarPor(columna) {
     
     // Mostrar indicador de orden
     const indicador = document.getElementById(`orden-${columna}`);
-    indicador.textContent = ordenAscendente ? '↑' : '↓';
+    if (indicador) {
+        indicador.textContent = ordenAscendente ? '↑' : '↓';
+    }
     
     // Aplicar ordenamiento
     const datosAOrdenar = datosFiltrados.length > 0 ? datosFiltrados : datosGlobal;
@@ -180,10 +181,6 @@ function ordenarPor(columna) {
         let valA, valB;
         
         switch(columna) {
-            case 'id':
-                valA = a.id_proyecto || a.id || 0;
-                valB = b.id_proyecto || b.id || 0;
-                break;
             case 'matricula':
                 valA = (a.matricula || '').toLowerCase();
                 valB = (b.matricula || '').toLowerCase();
@@ -235,7 +232,7 @@ function cargar() {
             console.error('Error:', error);
             actualizarStatus('Error al cargar los datos', true);
             document.getElementById('tabla').innerHTML = 
-                '<tr><td colspan="9" style="text-align:center; color:#e74a3b;">Error al cargar datos. Verifica la conexión.</td></tr>';
+                '<tr><td colspan="8" style="text-align:center; color:#e74a3b;">Error al cargar datos. Verifica la conexión.</td></tr>';
         });
 }
 
@@ -243,14 +240,13 @@ function mostrar(data) {
     let tabla = document.getElementById("tabla");
     
     if (!data || data.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay datos disponibles</td></tr>';
+        tabla.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay datos disponibles</td></tr>';
         return;
     }
     
     tabla.innerHTML = "";
     
     data.forEach(p => {
-        const id = p.id_proyecto || p.id || '';
         const matricula = p.matricula || 'N/A';
         
         // Construir nombre del alumno
@@ -262,16 +258,18 @@ function mostrar(data) {
         }
         
         // Construir nombre del asesor interno
-        let asesorInterno = 'N/A';
+        let asesorInterno = '';
         if (p.nombre_ase_int || p.apellido_ase_int) {
             asesorInterno = `${p.nombre_ase_int || ''} ${p.apellido_ase_int || ''}`.trim();
         }
+        if (!asesorInterno) asesorInterno = '-';
         
         // Construir nombre del asesor externo
-        let asesorExterno = 'N/A';
+        let asesorExterno = '';
         if (p.nombre_ase_ext || p.apellido_ase_ext) {
             asesorExterno = `${p.nombre_ase_ext || ''} ${p.apellido_ase_ext || ''}`.trim();
         }
+        if (!asesorExterno) asesorExterno = '-';
         
         const proyecto = p.proyecto || p.titulo || 'N/A';
         const empresa = p.nombre_empresa || p.empresa || 'N/A';
@@ -279,7 +277,6 @@ function mostrar(data) {
         
         tabla.innerHTML += `
         <tr>
-            <td>${id}</td>
             <td>${matricula}</td>
             <td>${alumno}</td>
             <td>${proyecto}</td>
@@ -288,8 +285,8 @@ function mostrar(data) {
             <td>${asesorInterno}</td>
             <td>${asesorExterno}</td>
             <td>
-                <button class="btn-warning" onclick="cargarEdicion(${id})" style="margin-right:5px;">✏️</button>
-                <button class="btn-danger" onclick="eliminar(${id})">🗑️</button>
+                <button class="btn-warning" onclick="cargarEdicion(${p.id_proyecto || p.id})" style="margin-right:5px;" title="Editar">✏️</button>
+                <button class="btn-danger" onclick="eliminar(${p.id_proyecto || p.id})" title="Eliminar">🗑️</button>
             </td>
         </tr>
         `;
@@ -317,6 +314,8 @@ function registrar() {
         fecha_fin: fecha_fin.value
     };
     
+    console.log("Enviando datos:", datos);
+    
     actualizarStatus(editandoId ? 'Actualizando registro...' : 'Guardando registro...');
     
     const url = editandoId ? `${API}/editar/${editandoId}` : `${API}/registrar`;
@@ -332,6 +331,7 @@ function registrar() {
         return response.json();
     })
     .then(resultado => {
+        console.log("Respuesta:", resultado);
         actualizarStatus(editandoId ? 'Registro actualizado' : 'Registro guardado');
         limpiarFormulario();
         cargar();
@@ -392,7 +392,7 @@ function cargarEdicion(id) {
         fecha_fin.value = proyecto_data.fecha_fin.split('T')[0];
     }
     
-    actualizarStatus(`Editando proyecto ID: ${id}`);
+    actualizarStatus(`Editando proyecto: ${proyecto.value}`);
 }
 
 function limpiarFormulario() {
