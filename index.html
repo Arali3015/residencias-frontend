@@ -323,15 +323,22 @@ function registrar() {
 }
 
 function eliminar(id) {
-    console.log("Eliminando ID:", id); // Para debug
+    console.log("Eliminando ID:", id);
     if (confirm('¿Estás seguro de eliminar este registro?')) {
         actualizarStatus('Eliminando registro...');
         
-        fetch(`${API}/eliminar/${id}`, { method: "DELETE" })
-        .then(response => {
-            console.log("Respuesta status:", response.status);
-            if (!response.ok) throw new Error('Error al eliminar');
-            return response.json();
+        fetch(`${API}/eliminar/${id}`, { 
+            method: "DELETE",
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al eliminar');
+            }
+            return data;
         })
         .then(data => {
             console.log("Respuesta:", data);
@@ -339,12 +346,13 @@ function eliminar(id) {
             cargar();
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error completo:', error);
             actualizarStatus('Error al eliminar', true);
             alert('Error al eliminar: ' + error.message);
         });
     }
 }
+
 function cargarEdicion(id) {
     const proyecto_data = datosGlobal.find(p => p.id_proyecto == id);
     
