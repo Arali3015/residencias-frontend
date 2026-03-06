@@ -244,9 +244,6 @@ function mostrar(data) {
     tabla.innerHTML = "";
     
     data.forEach(p => {
-        console.log("Registro:", p); // <-- ESTO ES IMPORTANTE, mira la consola
-        
-        // El ID puede venir como id_proyecto o como id
         const idRegistro = p.id_proyecto || p.id;
         const matricula = p.matricula || 'N/A';
         const alumno = p.alumno || 'N/A';
@@ -271,8 +268,7 @@ function mostrar(data) {
             <td>${asesorInterno}</td>
             <td>${asesorExterno}</td>
             <td>
-                <button class="btn-warning" onclick="cargarEdicion(${idRegistro})" style="margin-right:5px;" title="Editar">✏️</button>
-                <button class="btn-danger" onclick="eliminar(${idRegistro})" title="Eliminar">🗑️</button>
+                <button class="btn-danger" onclick="eliminar(${idRegistro})" title="Eliminar">🗑️ Eliminar</button>
             </td>
         </tr>
         `;
@@ -355,30 +351,6 @@ function eliminar(id) {
             alert('Error al eliminar: ' + error.message);
         });
     }
-}
-
-function cargarEdicion(id) {
-    const proyecto_data = datosGlobal.find(p => p.id_proyecto == id);
-    
-    if (!proyecto_data) {
-        alert('No se encontraron datos del proyecto');
-        return;
-    }
-    
-    editandoId = id;
-    
-    proyecto.value = proyecto_data.proyecto || '';
-    matricula.value = proyecto_data.matricula || '';
-    nombre_alumno.value = proyecto_data.nombre_alumno || '';
-    apellido_alumno.value = proyecto_data.apellido_alumno || '';
-    nombre_ase_int.value = proyecto_data.nombre_ase_int || '';
-    apellido_ase_int.value = proyecto_data.apellido_ase_int || '';
-    nombre_ase_ext.value = proyecto_data.nombre_ase_ext || '';
-    apellido_ase_ext.value = proyecto_data.apellido_ase_ext || '';
-    nombre_empresa.value = proyecto_data.nombre_empresa || '';
-    nombre_periodo.value = proyecto_data.nombre_periodo || '';
-    
-    actualizarStatus(`Editando proyecto: ${proyecto.value}`);
 }
 
 function limpiarFormulario() {
