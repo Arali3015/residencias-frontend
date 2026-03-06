@@ -42,19 +42,26 @@ font-weight:bold;
 .btn-danger{background:#e74a3b;color:white;}
 .btn-warning{background:#f6c23e;color:black;}
 .btn-success{background:#1cc88a;color:white;}
+.btn-info{background:#36b9cc;color:white;}
 table{
 width:100%;
 border-collapse:collapse;
 margin-top:20px;
-font-size:14px;
+font-size:13px;
 }
 th{
 background:#4e73df;
 color:white;
-padding:10px;
+padding:8px;
+position:sticky;
+top:0;
+cursor:pointer;
+}
+th:hover{
+background:#2e59d9;
 }
 td{
-padding:8px;
+padding:6px;
 border-bottom:1px solid #ddd;
 text-align:center;
 }
@@ -71,6 +78,10 @@ margin-bottom:15px;
 text-align:center;
 color:#4e73df;
 font-weight:bold;
+}
+.orden-indicador{
+font-size:12px;
+margin-left:5px;
 }
 </style>
 </head>
@@ -112,17 +123,19 @@ font-weight:bold;
 <table>
 <thead>
 <tr>
-<th>ID</th>
-<th>Matrícula</th>
-<th>Alumno</th>
-<th>Proyecto</th>
-<th>Empresa</th>
-<th>Periodo</th>
+<th onclick="ordenarPor('id')">ID <span class="orden-indicador" id="orden-id">↕️</span></th>
+<th onclick="ordenarPor('matricula')">Matrícula <span class="orden-indicador" id="orden-matricula">↕️</span></th>
+<th onclick="ordenarPor('alumno')">Alumno <span class="orden-indicador" id="orden-alumno">↕️</span></th>
+<th onclick="ordenarPor('proyecto')">Proyecto <span class="orden-indicador" id="orden-proyecto">↕️</span></th>
+<th onclick="ordenarPor('empresa')">Empresa <span class="orden-indicador" id="orden-empresa">↕️</span></th>
+<th onclick="ordenarPor('periodo')">Periodo <span class="orden-indicador" id="orden-periodo">↕️</span></th>
+<th>Asesor Interno</th>
+<th>Asesor Externo</th>
 <th>Acciones</th>
 </tr>
 </thead>
 <tbody id="tabla">
-<tr><td colspan="7" style="text-align:center;">Cargando datos...</td></tr>
+<tr><td colspan="9" style="text-align:center;">Cargando datos...</td></tr>
 </tbody>
 </table>
 
@@ -131,13 +144,76 @@ font-weight:bold;
 <script>
 const API = "https://web-production-e1c80.up.railway.app";
 let datosGlobal = [];
+let datosFiltrados = [];
 let editandoId = null;
+
+// Variables para ordenamiento
+let columnaOrden = 'empresa';
+let ordenAscendente = true;
 
 function actualizarStatus(mensaje, esError = false) {
     const statusBar = document.getElementById('statusBar');
     statusBar.textContent = mensaje;
     statusBar.style.background = esError ? '#f8d7da' : '#f8f9fc';
     statusBar.style.color = esError ? '#721c24' : '#4e73df';
+}
+
+function ordenarPor(columna) {
+    // Actualizar indicadores de orden
+    document.querySelectorAll('.orden-indicador').forEach(el => el.textContent = '↕️');
+    
+    if (columnaOrden === columna) {
+        ordenAscendente = !ordenAscendente;
+    } else {
+        columnaOrden = columna;
+        ordenAscendente = true;
+    }
+    
+    // Mostrar indicador de orden
+    const indicador = document.getElementById(`orden-${columna}`);
+    indicador.textContent = ordenAscendente ? '↑' : '↓';
+    
+    // Aplicar ordenamiento
+    const datosAOrdenar = datosFiltrados.length > 0 ? datosFiltrados : datosGlobal;
+    
+    datosAOrdenar.sort((a, b) => {
+        let valA, valB;
+        
+        switch(columna) {
+            case 'id':
+                valA = a.id_proyecto || a.id || 0;
+                valB = b.id_proyecto || b.id || 0;
+                break;
+            case 'matricula':
+                valA = (a.matricula || '').toLowerCase();
+                valB = (b.matricula || '').toLowerCase();
+                break;
+            case 'alumno':
+                valA = ((a.nombre_alumno || '') + ' ' + (a.apellido_alumno || '')).toLowerCase();
+                valB = ((b.nombre_alumno || '') + ' ' + (b.apellido_alumno || '')).toLowerCase();
+                break;
+            case 'proyecto':
+                valA = (a.proyecto || a.titulo || '').toLowerCase();
+                valB = (b.proyecto || b.titulo || '').toLowerCase();
+                break;
+            case 'empresa':
+                valA = (a.nombre_empresa || a.empresa || '').toLowerCase();
+                valB = (b.nombre_empresa || b.empresa || '').toLowerCase();
+                break;
+            case 'periodo':
+                valA = (a.nombre_periodo || a.periodo || '').toLowerCase();
+                valB = (b.nombre_periodo || b.periodo || '').toLowerCase();
+                break;
+            default:
+                return 0;
+        }
+        
+        if (valA < valB) return ordenAscendente ? -1 : 1;
+        if (valA > valB) return ordenAscendente ? 1 : -1;
+        return 0;
+    });
+    
+    mostrar(datosAOrdenar);
 }
 
 function cargar() {
@@ -151,14 +227,15 @@ function cargar() {
         .then(data => {
             console.log("Datos recibidos:", data);
             datosGlobal = data;
-            mostrar(data);
+            datosFiltrados = [];
+            ordenarPor('empresa'); // Ordenar por empresa por defecto
             actualizarStatus(`${data.length} registros cargados correctamente`);
         })
         .catch(error => {
             console.error('Error:', error);
             actualizarStatus('Error al cargar los datos', true);
             document.getElementById('tabla').innerHTML = 
-                '<tr><td colspan="7" style="text-align:center; color:#e74a3b;">Error al cargar datos. Verifica la conexión.</td></tr>';
+                '<tr><td colspan="9" style="text-align:center; color:#e74a3b;">Error al cargar datos. Verifica la conexión.</td></tr>';
         });
 }
 
@@ -166,14 +243,13 @@ function mostrar(data) {
     let tabla = document.getElementById("tabla");
     
     if (!data || data.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center;">No hay datos disponibles</td></tr>';
+        tabla.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay datos disponibles</td></tr>';
         return;
     }
     
     tabla.innerHTML = "";
     
     data.forEach(p => {
-        // Extraer datos según la estructura que vimos en /test
         const id = p.id_proyecto || p.id || '';
         const matricula = p.matricula || 'N/A';
         
@@ -183,6 +259,18 @@ function mostrar(data) {
             alumno = `${p.nombre_alumno || ''} ${p.apellido_alumno || ''}`.trim();
         } else if (p.alumno) {
             alumno = p.alumno;
+        }
+        
+        // Construir nombre del asesor interno
+        let asesorInterno = 'N/A';
+        if (p.nombre_ase_int || p.apellido_ase_int) {
+            asesorInterno = `${p.nombre_ase_int || ''} ${p.apellido_ase_int || ''}`.trim();
+        }
+        
+        // Construir nombre del asesor externo
+        let asesorExterno = 'N/A';
+        if (p.nombre_ase_ext || p.apellido_ase_ext) {
+            asesorExterno = `${p.nombre_ase_ext || ''} ${p.apellido_ase_ext || ''}`.trim();
         }
         
         const proyecto = p.proyecto || p.titulo || 'N/A';
@@ -197,9 +285,11 @@ function mostrar(data) {
             <td>${proyecto}</td>
             <td>${empresa}</td>
             <td>${periodo}</td>
+            <td>${asesorInterno}</td>
+            <td>${asesorExterno}</td>
             <td>
-                <button class="btn-warning" onclick="cargarEdicion(${id})" style="margin-right:5px;"> Editar</button>
-                <button class="btn-danger" onclick="eliminar(${id})">🗑️ Eliminar</button>
+                <button class="btn-warning" onclick="cargarEdicion(${id})" style="margin-right:5px;">✏️</button>
+                <button class="btn-danger" onclick="eliminar(${id})">🗑️</button>
             </td>
         </tr>
         `;
@@ -207,7 +297,6 @@ function mostrar(data) {
 }
 
 function registrar() {
-    // Validaciones básicas
     if (!proyecto.value.trim() || !matricula.value.trim() || !nombre_alumno.value.trim() || !nombre_empresa.value.trim()) {
         alert('Los campos marcados con * son obligatorios');
         return;
@@ -228,8 +317,6 @@ function registrar() {
         fecha_fin: fecha_fin.value
     };
     
-    console.log("Enviando datos:", datos);
-    
     actualizarStatus(editandoId ? 'Actualizando registro...' : 'Guardando registro...');
     
     const url = editandoId ? `${API}/editar/${editandoId}` : `${API}/registrar`;
@@ -245,7 +332,6 @@ function registrar() {
         return response.json();
     })
     .then(resultado => {
-        console.log("Respuesta:", resultado);
         actualizarStatus(editandoId ? 'Registro actualizado' : 'Registro guardado');
         limpiarFormulario();
         cargar();
@@ -288,7 +374,6 @@ function cargarEdicion(id) {
     
     editandoId = id;
     
-    // Llenar el formulario
     proyecto.value = proyecto_data.proyecto || proyecto_data.titulo || '';
     matricula.value = proyecto_data.matricula || '';
     nombre_alumno.value = proyecto_data.nombre_alumno || '';
@@ -300,7 +385,6 @@ function cargarEdicion(id) {
     nombre_empresa.value = proyecto_data.nombre_empresa || proyecto_data.empresa || '';
     nombre_periodo.value = proyecto_data.nombre_periodo || proyecto_data.periodo || '';
     
-    // Formatear fechas si existen
     if (proyecto_data.fecha_inicio) {
         fecha_inicio.value = proyecto_data.fecha_inicio.split('T')[0];
     }
@@ -332,11 +416,12 @@ function filtrar() {
     const texto = buscar.value.toLowerCase().trim();
     
     if (!texto) {
-        mostrar(datosGlobal);
+        datosFiltrados = [];
+        ordenarPor(columnaOrden);
         return;
     }
     
-    const filtrado = datosGlobal.filter(p => {
+    datosFiltrados = datosGlobal.filter(p => {
         const proyecto = (p.proyecto || p.titulo || '').toLowerCase();
         const empresa = (p.nombre_empresa || p.empresa || '').toLowerCase();
         const matricula = (p.matricula || '').toLowerCase();
@@ -348,11 +433,10 @@ function filtrar() {
                alumno.includes(texto);
     });
     
-    mostrar(filtrado);
-    actualizarStatus(`Mostrando ${filtrado.length} de ${datosGlobal.length} registros`);
+    ordenarPor(columnaOrden);
+    actualizarStatus(`Mostrando ${datosFiltrados.length} de ${datosGlobal.length} registros`);
 }
 
-// Verificar conexión al iniciar
 function verificarConexion() {
     fetch(API + "/test")
         .then(r => r.json())
